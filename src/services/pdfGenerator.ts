@@ -16,6 +16,16 @@ async function ensurePdfMake() {
   return pdfInit
 }
 
+function labelRow(label: string, value: string) {
+  return {
+    columns: [
+      { text: label, style: 'label', width: '30%' },
+      { text: value || '-', style: 'value', width: '*' },
+    ],
+    margin: [0, 0, 0, 6],
+  }
+}
+
 export async function generatePdf(
   overview: PackageOverview,
   hotels: HotelOption[],
@@ -30,163 +40,132 @@ export async function generatePdf(
 ) {
   await ensurePdfMake()
 
-  function addPageBreak() {
-    doc.content.push({ text: '', pageBreak: 'before' })
+  const content: any[] = []
+
+  function sec(text: string) {
+    return { text, style: 'sectionTitle', margin: [0, 18, 0, 8] }
+  }
+  function sub(text: string) {
+    return { text, style: 'subLabel', margin: [0, 0, 0, 4] }
+  }
+  function pt(text: string) {
+    return { text: `•  ${text}`, style: 'bodyText', margin: [0, 0, 0, 2] }
   }
 
-  const doc: any = {
-    pageSize: 'A4',
-    pageMargins: [50, 40, 50, 40],
-    content: [],
-    defaultStyle: { font: 'Roboto' },
-    styles: {
-      header: { fontSize: 18, bold: true, margin: [0, 0, 0, 6] },
-      subheader: { fontSize: 13, bold: true, margin: [0, 0, 0, 4], color: '#1e40af' },
-      sectionTitle: { fontSize: 14, bold: true, margin: [0, 0, 0, 6], color: '#1e3a5f' },
-      bodyText: { fontSize: 10, lineHeight: 1.4, margin: [0, 0, 0, 4] },
-      small: { fontSize: 9, color: '#555' },
-    },
-  }
-
-  // ═══════════ 1. PACKAGE OVERVIEW ═══════════
-  doc.content.push(
-    { text: 'ITINERARY', style: 'header', alignment: 'center', margin: [0, 20, 0, 8] },
-    { text: 'Package Overview', style: 'sectionTitle', margin: [0, 0, 0, 6] },
-    {
-      table: {
-        headerRows: 0,
-        widths: ['auto', '*'],
-        body: [
-          [{ text: 'Destination', style: 'small', bold: true, fillColor: '#f3f4f6' }, { text: overview.destination || '-', style: 'small' }],
-          [{ text: 'Stay Breakdown', style: 'small', bold: true, fillColor: '#f3f4f6' }, { text: overview.stayBreakdown || '-', style: 'small' }],
-          [{ text: 'Start Date', style: 'small', bold: true, fillColor: '#f3f4f6' }, { text: overview.startDate || '-', style: 'small' }],
-          [{ text: 'Trip Duration', style: 'small', bold: true, fillColor: '#f3f4f6' }, { text: overview.tripDuration || '-', style: 'small' }],
-          [{ text: 'Pax', style: 'small', bold: true, fillColor: '#f3f4f6' }, { text: `${overview.pax} Adults`, style: 'small' }],
-        ],
-      },
-      layout: 'lightHorizontalLines',
-      margin: [0, 0, 0, 16],
-    },
+  // ═══════════ HEADER ═══════════
+  content.push(
+    { text: 'ITINERARY', style: 'docTitle', alignment: 'center', margin: [0, 0, 0, 18] },
   )
 
-  // ═══════════ 2. HOTELS + PRICING + TRANSPORT ═══════════
+  // ═══════════ 1. PACKAGE OVERVIEW ═══════════
+  content.push(
+    { text: 'Package Overview', style: 'sectionTitle', margin: [0, 0, 0, 10] },
+    labelRow('Destination', overview.destination),
+    labelRow('Stay', overview.stayBreakdown),
+    labelRow('Start Date', overview.startDate),
+    labelRow('Duration', overview.tripDuration),
+    labelRow('Pax', `${overview.pax} Adults`),
+  )
+
+  // ═══════════ 2. HOTELS ═══════════
   if (hotels.length > 0) {
-    addPageBreak()
-    doc.content.push({ text: 'HOTELS', style: 'sectionTitle' })
+    content.push(sec('Hotels'))
     for (const opt of hotels) {
-      doc.content.push(
-        { text: opt.title || 'Hotel Option', style: 'subheader', margin: [0, 8, 0, 4] },
-        {
-          table: {
-            headerRows: 1,
-            widths: ['auto', '*', '*', '*', '*'],
-            body: [
-              [
-                { text: 'Nights', style: 'small', bold: true },
-                { text: 'City', style: 'small', bold: true },
-                { text: 'Hotel Name', style: 'small', bold: true },
-                { text: 'Meal Plan', style: 'small', bold: true },
-                { text: 'Accommodation', style: 'small', bold: true },
-              ],
-              ...opt.stays.map((s) => [
-                { text: s.nights || '-', style: 'small' },
-                { text: s.city || '-', style: 'small' },
-                { text: s.hotelName || '-', style: 'small' },
-                { text: s.mealPlan.join(', ') || '-', style: 'small' },
-                { text: s.accommodation || '-', style: 'small' },
-              ]),
-            ],
-          },
-          layout: 'lightHorizontalLines',
-          margin: [0, 0, 0, 8],
-        },
+      const rows: any[] = [[
+        { text: 'Nights', style: 'th' },
+        { text: 'City', style: 'th' },
+        { text: 'Hotel Name', style: 'th' },
+        { text: 'Meal', style: 'th' },
+        { text: 'Room', style: 'th' },
+      ]]
+      for (const stay of opt.stays) {
+        rows.push([
+          { text: stay.nights, style: 'td' },
+          { text: stay.city, style: 'td' },
+          { text: stay.hotelName, style: 'td' },
+          { text: stay.mealPlan.join(', '), style: 'td' },
+          { text: stay.accommodation, style: 'td' },
+        ])
+      }
+      content.push(
+        { text: opt.title, style: 'optionTitle', margin: [0, 0, 0, 6] },
+        { table: { headerRows: 1, widths: ['auto', 'auto', '*', 'auto', '*'], body: rows }, layout: 'lightHorizontalLines', margin: [0, 0, 0, 10] },
       )
     }
 
-    // Pricing
+    // ═══════════ 3. PRICING ═══════════
     if (pricing.length > 0) {
-      doc.content.push({ text: 'PRICING', style: 'sectionTitle', margin: [0, 12, 0, 6] })
+      content.push(sec('Pricing'))
       for (const p of pricing) {
-        doc.content.push({
+        content.push({
           columns: [
             { text: p.optionTitle, style: 'bodyText', bold: true },
-            { text: `₹ ${p.amount}/- ${p.includesGST ? '(incl. GST)' : ''}`, style: 'bodyText', alignment: 'right', bold: true },
+            { text: `₹ ${p.amount}/- ${p.includesGST ? '(incl. GST)' : ''}`, style: 'bodyText', bold: true, alignment: 'right' },
           ],
+          margin: [0, 0, 0, 4],
         })
       }
     }
 
-    // Transportation
+    // ═══════════ 4. TRANSPORTATION ═══════════
     if (transport.vehicle || transport.days.length > 0) {
-      doc.content.push({ text: 'TRANSPORTATION', style: 'sectionTitle', margin: [0, 12, 0, 4] })
-      doc.content.push({ text: `Vehicle: ${transport.vehicle || 'N/A'}`, style: 'bodyText', margin: [0, 0, 0, 6] })
+      content.push(sec('Transportation'))
+      if (transport.vehicle) {
+        content.push({ text: `Vehicle: ${transport.vehicle}`, style: 'bodyText', margin: [0, 0, 0, 6] })
+      }
       if (transport.days.length > 0) {
-        doc.content.push({
-          table: {
-            headerRows: 1,
-            widths: ['auto', '*'],
-            body: [
-              [{ text: 'Day', style: 'small', bold: true }, { text: 'Service', style: 'small', bold: true }],
-              ...transport.days.map((d) => [
-                { text: d.day || '-', style: 'small' },
-                { text: d.service || '-', style: 'small' },
-              ]),
-            ],
-          },
-          layout: 'lightHorizontalLines',
-          margin: [0, 0, 0, 8],
-        })
+        const tRows: any[] = [
+          [{ text: 'Day', style: 'th' }, { text: 'Service', style: 'th' }],
+        ]
+        for (const d of transport.days) {
+          tRows.push([{ text: d.day, style: 'td' }, { text: d.service, style: 'td' }])
+        }
+        content.push({ table: { headerRows: 1, widths: ['auto', '*'], body: tRows }, layout: 'lightHorizontalLines', margin: [0, 0, 0, 10] })
       }
     }
   }
 
-  // ═══════════ 3. INCLUSIONS / EXCLUSIONS ═══════════
-  addPageBreak()
-  doc.content.push({ text: 'INCLUSIONS', style: 'sectionTitle' })
-  const inclusions = inclusionsExclusions.inclusions.filter(Boolean)
-  if (inclusions.length > 0) {
-    for (const inc of inclusions) {
-      doc.content.push({ text: `•  ${inc}`, style: 'bodyText', margin: [0, 0, 0, 2] })
+  // ═══════════ 5. INCLUSIONS / EXCLUSIONS ═══════════
+  const filterIncs = inclusionsExclusions.inclusions.filter(Boolean)
+  const filterExcs = inclusionsExclusions.exclusions.filter(Boolean)
+  if (filterIncs.length > 0 || filterExcs.length > 0) {
+    content.push(sec('Inclusions & Exclusions'))
+    if (filterIncs.length > 0) {
+      content.push(sub('Inclusions'))
+      for (const inc of filterIncs) content.push(pt(inc))
     }
-  } else {
-    doc.content.push({ text: '•  No inclusions listed', style: 'bodyText', color: '#999' })
+    if (filterExcs.length > 0) {
+      content.push({ ...sub('Exclusions'), margin: [0, 10, 0, 4] })
+      for (const exc of filterExcs) content.push(pt(exc))
+    }
   }
 
-  doc.content.push({ text: 'EXCLUSIONS', style: 'sectionTitle', margin: [0, 14, 0, 6] })
-  const exclusions = inclusionsExclusions.exclusions.filter(Boolean)
-  if (exclusions.length > 0) {
-    for (const exc of exclusions) {
-      doc.content.push({ text: `•  ${exc}`, style: 'bodyText', margin: [0, 0, 0, 2] })
-    }
-  } else {
-    doc.content.push({ text: '•  No exclusions listed', style: 'bodyText', color: '#999' })
-  }
-
-  // ═══════════ 4. DAY WISE ITINERARY ═══════════
-  for (const day of days) {
-    addPageBreak()
-    doc.content.push(
-      { text: `${day.day}`, style: 'subheader' },
-      { text: day.title, style: 'sectionTitle', margin: [0, 0, 0, 6] },
-    )
-    if (day.distance || day.travelTime) {
-      const parts: string[] = []
-      if (day.distance) parts.push(`Distance: ${day.distance}`)
-      if (day.travelTime) parts.push(`Travel Time: ${day.travelTime}`)
-      doc.content.push({ text: parts.join('  ·  '), style: 'small', color: '#666', margin: [0, 0, 0, 6] })
-    }
-    if (day.description) {
-      doc.content.push({ text: day.description, style: 'bodyText' })
-    }
-    const points = day.points.filter(Boolean)
-    if (points.length > 0) {
-      for (const point of points) {
-        doc.content.push({ text: `•  ${point}`, style: 'bodyText', margin: [0, 0, 0, 2] })
+  // ═══════════ 6. DAY WISE ITINERARY ═══════════
+  if (days.length > 0) {
+    content.push(sec('Day Wise Itinerary'))
+    for (const day of days) {
+      content.push(
+        { text: day.day, style: 'dayTitle', margin: [0, 0, 0, 2] },
+        { text: day.title, style: 'daySubtitle', margin: [0, 0, 0, 4] },
+      )
+      if (day.distance || day.travelTime) {
+        const parts: string[] = []
+        if (day.distance) parts.push(`Distance: ${day.distance}`)
+        if (day.travelTime) parts.push(`Travel Time: ${day.travelTime}`)
+        content.push({ text: parts.join('  ·  '), style: 'meta', margin: [0, 0, 0, 4] })
       }
+      if (day.description) {
+        content.push({ text: day.description, style: 'bodyText', margin: [0, 0, 0, 4] })
+      }
+      const pts = day.points.filter(Boolean)
+      if (pts.length > 0) {
+        for (const p of pts) content.push(pt(p))
+      }
+      content.push({ text: '', margin: [0, 0, 0, 6] })
     }
   }
 
-  // ═══════════ 5. GALLERY ═══════════
+  // ═══════════ 7. GALLERY ═══════════
   async function imageToDataUrl(url: string): Promise<string> {
     if (url.startsWith('data:')) return url
     try {
@@ -202,86 +181,78 @@ export async function generatePdf(
     }
   }
 
-  const galleryDataUrls = await Promise.all(gallery.map((img) => imageToDataUrl(img.url)))
-
   if (gallery.length > 0) {
-    addPageBreak()
-    doc.content.push({ text: 'PHOTO GALLERY', style: 'sectionTitle' })
-    const perPage = 6
-    const galleryPages = Math.ceil(gallery.length / perPage)
-    for (let p = 0; p < galleryPages; p++) {
-      if (p > 0) addPageBreak()
-      const pageImages = gallery.slice(p * perPage, (p + 1) * perPage)
-      const pageDataUrls = galleryDataUrls.slice(p * perPage, (p + 1) * perPage)
-      const gridRows: any[] = []
-      for (let i = 0; i < pageImages.length; i += 3) {
-        const row: any[] = pageImages.slice(i, i + 3).map((_, idx) => {
-          const dataUrl = pageDataUrls[i + idx]
-          return dataUrl
-            ? { image: dataUrl, width: 150, height: 110, margin: [0, 0, 8, 8] }
-            : { text: '', width: 150, height: 110, margin: [0, 0, 8, 8] }
-        })
-        while (row.length < 3) {
-          row.push({ text: '', width: 150, height: 110, margin: [0, 0, 8, 8] })
-        }
-        gridRows.push(row)
-      }
-      doc.content.push({
-        table: { body: gridRows },
-        layout: 'noBorders',
-        margin: [0, 8, 0, 0],
-      })
+    content.push(sec('Gallery'))
+    const galleryDataUrls = await Promise.all(gallery.map((img) => imageToDataUrl(img.url)))
+    const gridRows: any[] = []
+    for (let i = 0; i < galleryDataUrls.length; i += 3) {
+      const row: any[] = galleryDataUrls.slice(i, i + 3).map((url) =>
+        url ? { image: url, width: 160, height: 120, margin: [0, 0, 6, 6] } : { text: '', width: 160, height: 120 }
+      )
+      while (row.length < 3) row.push({ text: '', width: 160, height: 120 })
+      gridRows.push(row)
+    }
+    if (gridRows.length > 0) {
+      content.push({ table: { body: gridRows }, layout: 'noBorders', margin: [0, 0, 0, 10] })
     }
   }
 
-  // ═══════════ 6. TERMS & CONDITIONS ═══════════
+  // ═══════════ 8. TERMS & CONDITIONS ═══════════
   if (terms.length > 0) {
-    addPageBreak()
-    doc.content.push({ text: 'TERMS & CONDITIONS', style: 'sectionTitle' })
+    content.push(sec('Terms & Conditions'))
     for (const section of terms) {
-      doc.content.push(
-        { text: section.title, style: 'subheader', margin: [0, 8, 0, 4] },
-        { text: section.content, style: 'bodyText' },
+      content.push(
+        sub(section.title),
+        { text: section.content, style: 'bodyText', margin: [0, 0, 0, 10] },
       )
     }
   }
 
-  // ═══════════ 7. COMPANY DETAILS ═══════════
-  addPageBreak()
-  doc.content.push({ text: 'COMPANY DETAILS', style: 'sectionTitle' })
-  if (company.companyName) doc.content.push({ text: company.companyName, style: 'subheader', margin: [0, 0, 0, 4] })
-  if (company.legalInfo) doc.content.push({ text: company.legalInfo, style: 'bodyText' })
+  // ═══════════ 9. COMPANY + CONTACT ═══════════
+  content.push(sec('Company Details'))
+  if (company.companyName) content.push({ text: company.companyName, style: 'optionTitle', margin: [0, 0, 0, 4] })
+  if (company.legalInfo) content.push({ text: company.legalInfo, style: 'bodyText', margin: [0, 0, 0, 6] })
   const badges = company.badges.filter(Boolean)
   if (badges.length > 0) {
-    doc.content.push({ text: 'Certifications & Badges', style: 'subheader', margin: [0, 10, 0, 4] })
-    for (const badge of badges) {
-      doc.content.push({ text: `★  ${badge}`, style: 'bodyText' })
-    }
+    content.push(sub('Badges'))
+    for (const badge of badges) content.push(pt(badge))
   }
 
-  // ═══════════ 8. CONTACT US ═══════════
-  doc.content.push({ text: 'CONTACT US', style: 'sectionTitle', margin: [0, 16, 0, 6] })
-  const contactRows: any[] = []
-  if (contact.ownerName) contactRows.push([{ text: 'Name', style: 'small', bold: true }, { text: contact.ownerName, style: 'small' }])
-  if (contact.mobile) contactRows.push([{ text: 'Mobile', style: 'small', bold: true }, { text: contact.mobile, style: 'small' }])
-  if (contact.email) contactRows.push([{ text: 'Email', style: 'small', bold: true }, { text: contact.email, style: 'small' }])
-  if (contact.instagram) contactRows.push([{ text: 'Instagram', style: 'small', bold: true }, { text: contact.instagram, style: 'small' }])
-  if (contact.officeAddress) contactRows.push([{ text: 'Address', style: 'small', bold: true }, { text: contact.officeAddress, style: 'small' }])
-  if (contactRows.length > 0) {
-    doc.content.push({
-      table: { headerRows: 0, widths: ['auto', '*'], body: contactRows },
-      layout: 'noBorders',
-      margin: [0, 0, 0, 8],
-    })
-  }
+  content.push(sec('Contact'))
+  if (contact.ownerName) content.push(labelRow('Name', contact.ownerName))
+  if (contact.mobile) content.push(labelRow('Mobile', contact.mobile))
+  if (contact.email) content.push(labelRow('Email', contact.email))
+  if (contact.instagram) content.push(labelRow('Instagram', contact.instagram))
+  if (contact.officeAddress) content.push(labelRow('Address', contact.officeAddress))
 
-  // ═══════════ FOOTER ═══════════
-  doc.footer = (currentPage: number, pageCount: number) => ({
-    text: `Page ${currentPage} of ${pageCount}`,
-    alignment: 'center',
-    style: 'small',
-    margin: [0, 10, 0, 0],
-  })
+  // ═══════════ BUILD DOC ═══════════
+  const doc: any = {
+    pageSize: 'A4',
+    pageMargins: [50, 50, 50, 50],
+    content,
+    defaultStyle: { font: 'Roboto', fontSize: 10, color: '#374151' },
+    styles: {
+      docTitle: { fontSize: 16, bold: true, color: '#1f2937' },
+      sectionTitle: { fontSize: 12, bold: true, color: '#1e40af' },
+      optionTitle: { fontSize: 10, bold: true, color: '#1f2937' },
+      dayTitle: { fontSize: 11, bold: true, color: '#1e40af' },
+      daySubtitle: { fontSize: 10, bold: true, color: '#374151' },
+      subLabel: { fontSize: 10, bold: true, color: '#4b5563' },
+      bodyText: { fontSize: 9.5, lineHeight: 1.45, color: '#374151' },
+      meta: { fontSize: 9, color: '#6b7280' },
+      label: { fontSize: 9.5, bold: true, color: '#6b7280' },
+      value: { fontSize: 9.5, color: '#1f2937' },
+      th: { fontSize: 9, bold: true, color: '#4b5563', fillColor: '#f9fafb' },
+      td: { fontSize: 9, color: '#374151' },
+    },
+    footer: (currentPage: number, pageCount: number) => ({
+      text: `Page ${currentPage} of ${pageCount}`,
+      alignment: 'center',
+      fontSize: 8,
+      color: '#9ca3af',
+      margin: [0, 10, 0, 0],
+    }),
+  }
 
   // ═══════════ GENERATE ═══════════
   const destination = overview.destination || 'itinerary'
