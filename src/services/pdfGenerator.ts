@@ -187,6 +187,23 @@ export async function generatePdf(
   }
 
   // ═══════════ 5. GALLERY ═══════════
+  async function imageToDataUrl(url: string): Promise<string> {
+    if (url.startsWith('data:')) return url
+    try {
+      const resp = await fetch(url)
+      const blob = await resp.blob()
+      return new Promise((resolve) => {
+        const reader = new FileReader()
+        reader.onloadend = () => resolve(reader.result as string)
+        reader.readAsDataURL(blob)
+      })
+    } catch {
+      return ''
+    }
+  }
+
+  const galleryDataUrls = await Promise.all(gallery.map((img) => imageToDataUrl(img.url)))
+
   if (gallery.length > 0) {
     addPageBreak()
     doc.content.push({ text: 'PHOTO GALLERY', style: 'sectionTitle' })
@@ -195,16 +212,17 @@ export async function generatePdf(
     for (let p = 0; p < galleryPages; p++) {
       if (p > 0) addPageBreak()
       const pageImages = gallery.slice(p * perPage, (p + 1) * perPage)
+      const pageDataUrls = galleryDataUrls.slice(p * perPage, (p + 1) * perPage)
       const gridRows: any[] = []
       for (let i = 0; i < pageImages.length; i += 3) {
-        const row: any[] = pageImages.slice(i, i + 3).map((img) => ({
-          image: img.url,
-          width: 150,
-          height: 110,
-          margin: [0, 0, 8, 8],
-        }))
+        const row: any[] = pageImages.slice(i, i + 3).map((_, idx) => {
+          const dataUrl = pageDataUrls[i + idx]
+          return dataUrl
+            ? { image: dataUrl, width: 150, height: 110, margin: [0, 0, 8, 8] }
+            : { text: '', width: 150, height: 110, margin: [0, 0, 8, 8] }
+        })
         while (row.length < 3) {
-          row.push({ text: '', width: 150, margin: [0, 0, 8, 8] })
+          row.push({ text: '', width: 150, height: 110, margin: [0, 0, 8, 8] })
         }
         gridRows.push(row)
       }
