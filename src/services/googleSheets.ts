@@ -24,7 +24,7 @@ function normalizePrivateKey(key: string): string {
   return key.replace(/\\n/g, '\n').trim()
 }
 
-function pemToBinary(pem: string): ArrayBufferLike {
+function pemToBinary(pem: string): ArrayBuffer {
   const b64 = pem
     .replace('-----BEGIN PRIVATE KEY-----', '')
     .replace('-----END PRIVATE KEY-----', '')
@@ -32,13 +32,12 @@ function pemToBinary(pem: string): ArrayBufferLike {
   const binary = atob(b64)
   const bytes = new Uint8Array(binary.length)
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-  return bytes.buffer
+  return bytes.buffer as ArrayBuffer
 }
 
-function base64UrlEncode(buffer: ArrayBufferLike): string {
-  const bytes = new Uint8Array(buffer)
+function base64UrlEncode(data: Uint8Array): string {
   let binary = ''
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
+  for (let i = 0; i < data.length; i++) binary += String.fromCharCode(data[i])
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 }
 
@@ -70,7 +69,7 @@ async function createJWT(clientEmail: string, privateKey: string): Promise<strin
   const signature = await crypto.subtle.sign(
     { name: 'RSASSA-PKCS1-v1_5' }, key, encoder.encode(message),
   )
-  return `${message}.${base64UrlEncode(signature)}`
+  return `${message}.${base64UrlEncode(new Uint8Array(signature))}`
 }
 
 class GoogleSheetsApi {
@@ -165,6 +164,38 @@ class GoogleSheetsApi {
     await this.ensureHeaders('Terms', ['State', 'Title', 'Content'])
     await this.ensureHeaders('Company Details', ['Company Name', 'Legal Info', 'Badges'])
     await this.ensureHeaders('Contact Info', ['Owner Name', 'Mobile', 'Email', 'Instagram', 'Address'])
+
+    await this.appendRows('Hotels', [
+      ['Sikkim', 'Click Collection Hotel 3 Star', 'Gangtok', 'CP', '2 Standard Room 4 Pax'],
+      ['Sikkim', 'Magpie Pachhu Village Resort', 'Pelling', 'CP', '2 Classic Room 4 Pax'],
+      ['West Bengal', "Queen's Yard 3 Star", 'Darjeeling', 'CP', '2 Deluxe 4 Pax'],
+      ['Sikkim', 'Magpie Libing Grand', 'Gangtok', 'CP', '2 Classic Room without Balcony 4 Pax'],
+      ['Sikkim', 'Magpie the chestnut retreat', 'Pelling', 'CP', '2 Delux 4 Pax'],
+      ['West Bengal', 'Udaan Himalayan Suites & Spa 4 Star', 'Darjeeling', 'CP', '2 Premium Kanchenjunga View Room 4 Pax'],
+    ])
+    await this.appendRows('Transportation', [
+      ['MVP', '1st Day (Sun, 23 Aug)', 'Bagdogra Airport to Gangtok - Arrival and Transfer'],
+      ['', '2nd Day (Mon, 24 Aug)', 'Gangtok - Fullday Sightseeing'],
+      ['', '3rd Day (Tue, 25 Aug)', 'Gangtok to Tsomgo Lake & New Baba Mandir - Excursion'],
+      ['', '4th Day (Wed, 26 Aug)', 'Gangtok to Pelling - Transfer Via Namchi & Ravangla'],
+      ['', '5th Day (Thu, 27 Aug)', 'Pelling to Darjeeling - Halfday Sightseeing and Transfer'],
+      ['', '6th Day (Fri, 28 Aug)', 'Darjeeling - Fullday Sightseeing'],
+      ['', '7th Day (Sat, 29 Aug)', 'Darjeeling to Bagdogra Airport - Drop'],
+    ])
+    await this.appendRows('Inclusions', [
+      ['Inclusions', 'All sightseeing and transfers Toll Tax Fuel and driver\'s expense.'],
+      ['Inclusions', 'Vehicles are on Point to Point Basis'],
+      ['Inclusions', 'All necessary permits / ILP (Foreign citizen) for Tsomgo lake and baba Mandir. / North Sikkim'],
+      ['Inclusions', 'Guides / entrance fees / Spot Parking'],
+    ])
+    await this.appendRows('Exclusions', [
+      ['Exclusions', 'Any cost arising due to natural / man-made calamities like landslides, road blockages, political disturbance, route diversion cost during transfers etc. has to be borne by the client which is payable directly to the driver during the course of the tour'],
+      ['Exclusions', 'Air fare / Train fare / Joy Ride Tickets'],
+      ['Exclusions', 'Any meals other than those specified in \'Cost Includes\'.'],
+      ['Exclusions', 'Expense of personal nature such as tips, telephone calls, laundry, liquor, etc.'],
+    ])
+    await this.appendRows('Company Details', [['Himalayan Travel Solutions', 'GSTIN: 19ABCDE1234F1Z5 | Registered under Govt. of India | Ministry of Tourism Approved', 'ISO 9001:2025 Certified, IATA Accredited Travel Agent, Govt. of Sikkim Tourism Partner, TripAdvisor Certificate of Excellence']])
+    await this.appendRows('Contact Info', [['Rajesh Sharma', '+91 98765 43210', 'info@himalayantravels.com', '@himalayan_travels', 'MG Marg, Gangtok, Sikkim - 737101, India']])
   }
 
   async fetchRef<T>(sheetName: string, mapper: (row: string[]) => T | null): Promise<T[]> {

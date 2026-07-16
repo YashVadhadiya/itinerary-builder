@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import type { ContactInfo } from '../../types'
 import { useItinerary } from '../../context/ItineraryContext'
 import ReferencePanel from '../common/ReferencePanel'
+import { sampleContactInfo } from '../../utils/sampleData'
 
 interface Props {
   initialData: ContactInfo
@@ -35,7 +36,8 @@ export default function ContactForm({ initialData, onBack, onNext }: Props) {
           { key: 'address', label: 'Address', placeholder: 'MG Marg, Gangtok' },
         ]} mapper={(r) => r[0] ? { ownerName: r[0], mobile: r[1]||'', email: r[2]||'', instagram: r[3]||'', address: r[4]||'' } : null}
           displayLabel={(c: any) => c.ownerName} displayDetail={(c: any) => `${c.mobile} · ${c.email}`}
-          selectedItems={refSelections} onSelectionChange={setRefSelections} searchPlaceholder="Search contacts..." />
+          selectedItems={refSelections} onSelectionChange={setRefSelections} searchPlaceholder="Search contacts..."
+          fallbackItems={[{ ...sampleContactInfo, address: sampleContactInfo.officeAddress }]} />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>

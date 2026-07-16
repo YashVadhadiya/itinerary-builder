@@ -16,11 +16,12 @@ interface Props<T> {
   selectedItems: T[]
   onSelectionChange: (items: T[]) => void
   searchPlaceholder?: string
+  fallbackItems?: T[]
 }
 
 export default function ReferencePanel<T extends Record<string, any>>({
   sheetName, columns, mapper, displayLabel, displayDetail,
-  selectedItems, onSelectionChange, searchPlaceholder,
+  selectedItems, onSelectionChange, searchPlaceholder, fallbackItems,
 }: Props<T>) {
   const [items, setItems] = useState<T[]>([])
   const [loading, setLoading] = useState(false)
@@ -49,12 +50,6 @@ export default function ReferencePanel<T extends Record<string, any>>({
     )
   }
 
-  const filtered = items.filter((item) => {
-    if (!search) return true
-    const q = search.toLowerCase()
-    return displayLabel(item).toLowerCase().includes(q) || (displayDetail?.(item)?.toLowerCase().includes(q) ?? false)
-  })
-
   async function handleAdd() {
     if (newRow.some((v) => !v.trim())) return
     setSaving(true)
@@ -63,13 +58,19 @@ export default function ReferencePanel<T extends Record<string, any>>({
     finally { setSaving(false) }
   }
 
-  if (!isSheetsConfigured()) return null
+  const allItems = [...items, ...(fallbackItems || [])]
+  const filtered = allItems.filter((item) => {
+    if (!search) return true
+    const q = search.toLowerCase()
+    return displayLabel(item).toLowerCase().includes(q) || (displayDetail?.(item)?.toLowerCase().includes(q) ?? false)
+  })
+  const hasSheets = isSheetsConfigured()
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <button type="button" onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 active:bg-gray-100 transition-colors">
-        <span>Saved {sheetName} {items.length ? `(${items.length})` : ''}</span>
+        <span>{hasSheets ? 'Saved' : 'Sample'} {sheetName} {allItems.length ? `(${allItems.length})` : ''}</span>
         <svg className={`w-4 h-4 transition-transform ${expanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
@@ -77,24 +78,28 @@ export default function ReferencePanel<T extends Record<string, any>>({
 
       {expanded && (
         <div className="px-4 pb-4 space-y-3 border-t border-gray-100 pt-3">
-          <button type="button" onClick={() => setShowAddForm(!showAddForm)}
-            className="w-full px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-xl hover:bg-blue-100 active:bg-blue-200 transition-colors">
-            {showAddForm ? 'Cancel' : '+ Add New to Sheet'}
-          </button>
-
-          {showAddForm && (
-            <div className="space-y-2 p-3 bg-gray-50 rounded-xl">
-              {columns.map((col, i) => (
-                <input key={col.key} type="text" value={newRow[i]}
-                  onChange={(e) => setNewRow((prev) => prev.map((v, j) => (j === i ? e.target.value : v)))}
-                  placeholder={col.placeholder || col.label}
-                  className="w-full px-3 py-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all" />
-              ))}
-              <button type="button" onClick={handleAdd} disabled={saving || newRow.some((v) => !v.trim())}
-                className="w-full px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors">
-                {saving ? 'Saving...' : 'Save to Sheet'}
+          {hasSheets && (
+            <>
+              <button type="button" onClick={() => setShowAddForm(!showAddForm)}
+                className="w-full px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-xl hover:bg-blue-100 active:bg-blue-200 transition-colors">
+                {showAddForm ? 'Cancel' : '+ Add New to Sheet'}
               </button>
-            </div>
+
+              {showAddForm && (
+                <div className="space-y-2 p-3 bg-gray-50 rounded-xl">
+                  {columns.map((col, i) => (
+                    <input key={col.key} type="text" value={newRow[i]}
+                      onChange={(e) => setNewRow((prev) => prev.map((v, j) => (j === i ? e.target.value : v)))}
+                      placeholder={col.placeholder || col.label}
+                      className="w-full px-3 py-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all" />
+                  ))}
+                  <button type="button" onClick={handleAdd} disabled={saving || newRow.some((v) => !v.trim())}
+                    className="w-full px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors">
+                    {saving ? 'Saving...' : 'Save to Sheet'}
+                  </button>
+                </div>
+              )}
+            </>
           )}
 
           <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}

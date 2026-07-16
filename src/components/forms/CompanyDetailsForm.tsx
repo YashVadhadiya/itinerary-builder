@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import type { CompanyDetails } from '../../types'
 import { useItinerary } from '../../context/ItineraryContext'
 import ReferencePanel from '../common/ReferencePanel'
+import { sampleCompanyDetails } from '../../utils/sampleData'
 
 interface Props {
   initialData: CompanyDetails
@@ -33,7 +34,8 @@ export default function CompanyDetailsForm({ initialData, onBack, onNext }: Prop
           { key: 'badges', label: 'Badges (comma separated)', placeholder: 'ISO Certified, IATA Member' },
         ]} mapper={(r) => r[0] ? { companyName: r[0], legalInfo: r[1]||'', badges: r[2]||'' } : null}
           displayLabel={(c: any) => c.companyName} displayDetail={(c: any) => c.legalInfo}
-          selectedItems={refSelections} onSelectionChange={setRefSelections} searchPlaceholder="Search companies..." />
+          selectedItems={refSelections} onSelectionChange={setRefSelections} searchPlaceholder="Search companies..."
+          fallbackItems={[{ ...sampleCompanyDetails, badges: sampleCompanyDetails.badges.filter(Boolean).join(', ') }]} />
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Company Name</label>

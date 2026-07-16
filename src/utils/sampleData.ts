@@ -1,4 +1,4 @@
-import type { PackageOverview, HotelOption, Transportation, PricingEntry, ItineraryDay, TermsSection, CompanyDetails, ContactInfo } from '../types'
+import type { PackageOverview, HotelOption, Transportation, PricingEntry, ItineraryDay, TermsSection, GalleryImage, CompanyDetails, ContactInfo } from '../types'
 
 export const sampleOverview: PackageOverview = {
   destination: 'Sikkim-Darjeeling',
@@ -236,6 +236,15 @@ export const sampleCompanyDetails: CompanyDetails = {
     'TripAdvisor Certificate of Excellence',
   ],
 }
+
+export const sampleGallery: GalleryImage[] = [
+  { id: 'g_1', url: 'https://picsum.photos/seed/gangtok1/400/300' },
+  { id: 'g_2', url: 'https://picsum.photos/seed/gangtok2/400/300' },
+  { id: 'g_3', url: 'https://picsum.photos/seed/pelling1/400/300' },
+  { id: 'g_4', url: 'https://picsum.photos/seed/pelling2/400/300' },
+  { id: 'g_5', url: 'https://picsum.photos/seed/darjeeling1/400/300' },
+  { id: 'g_6', url: 'https://picsum.photos/seed/darjeeling2/400/300' },
+]
 
 export const sampleContactInfo: ContactInfo = {
   ownerName: 'Rajesh Sharma',

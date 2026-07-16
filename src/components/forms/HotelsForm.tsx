@@ -38,14 +38,6 @@ export default function HotelsForm({ initialData, onBack, onNext }: Props) {
     })
   }, [refSelections])
 
-  function upd<T>(arr: T[], set: (v: T[]) => void, id: string, field: string, val: any, sub?: string) {
-    set(arr.map((item: any) => {
-      if (item.id !== id) return item
-      if (sub) return { ...item, [sub]: item[sub].map((s: any) => s.id === field ? { ...s, [val.key]: val.val } : s) }
-      return { ...item, [field]: val }
-    }))
-  }
-
   const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); dispatch({ type: 'SET_HOTEL_OPTIONS', payload: options }); onNext() }
 
   return (

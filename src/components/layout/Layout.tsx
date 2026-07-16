@@ -4,7 +4,7 @@ import { useItinerary } from '../../context/ItineraryContext'
 import {
   sampleOverview, sampleHotelOptions, sampleTransportation,
   samplePricing, sampleInclusionsExclusions, sampleItineraryDays,
-  sampleTerms, sampleCompanyDetails, sampleContactInfo,
+  sampleTerms, sampleGallery, sampleCompanyDetails, sampleContactInfo,
 } from '../../utils/sampleData'
 
 const STEPS = [
@@ -29,15 +29,21 @@ export default function Layout({ children }: { children: ReactNode }) {
   const showSteps = currentStep >= 0 && !isPreview
 
   function loadSampleData() {
-    dispatch({ type: 'SET_PACKAGE_OVERVIEW', payload: sampleOverview })
-    dispatch({ type: 'SET_HOTEL_OPTIONS', payload: sampleHotelOptions })
-    dispatch({ type: 'SET_TRANSPORTATION', payload: sampleTransportation })
-    dispatch({ type: 'SET_PRICING', payload: samplePricing })
-    dispatch({ type: 'SET_INCLUSIONS_EXCLUSIONS', payload: sampleInclusionsExclusions })
-    dispatch({ type: 'SET_ITINERARY_DAYS', payload: sampleItineraryDays })
-    dispatch({ type: 'SET_TERMS', payload: sampleTerms })
-    dispatch({ type: 'SET_COMPANY_DETAILS', payload: sampleCompanyDetails })
-    dispatch({ type: 'SET_CONTACT_INFO', payload: sampleContactInfo })
+    dispatch({
+      type: 'LOAD_SAMPLE_DATA',
+      payload: {
+        packageOverview: sampleOverview,
+        hotelOptions: sampleHotelOptions,
+        transportation: sampleTransportation,
+        pricing: samplePricing,
+        inclusionsExclusions: sampleInclusionsExclusions,
+        itineraryDays: sampleItineraryDays,
+        terms: sampleTerms,
+        gallery: sampleGallery,
+        companyDetails: sampleCompanyDetails,
+        contactInfo: sampleContactInfo,
+      },
+    })
   }
 
   return (

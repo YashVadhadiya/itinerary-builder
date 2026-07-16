@@ -12,6 +12,7 @@ interface ItineraryState {
   gallery: GalleryImage[]
   companyDetails: CompanyDetails
   contactInfo: ContactInfo
+  _version: number
 }
 
 type Action =
@@ -25,6 +26,18 @@ type Action =
   | { type: 'SET_GALLERY'; payload: GalleryImage[] }
   | { type: 'SET_COMPANY_DETAILS'; payload: CompanyDetails }
   | { type: 'SET_CONTACT_INFO'; payload: ContactInfo }
+  | { type: 'LOAD_SAMPLE_DATA'; payload: {
+      packageOverview: PackageOverview
+      hotelOptions: HotelOption[]
+      transportation: Transportation
+      pricing: PricingEntry[]
+      inclusionsExclusions: InclusionsExclusions
+      itineraryDays: ItineraryDay[]
+      terms: TermsSection[]
+      gallery: GalleryImage[]
+      companyDetails: CompanyDetails
+      contactInfo: ContactInfo
+    } }
 
 const initialState: ItineraryState = {
   packageOverview: {
@@ -43,6 +56,7 @@ const initialState: ItineraryState = {
   gallery: [],
   companyDetails: { companyName: '', legalInfo: '', badges: [''] },
   contactInfo: { ownerName: '', mobile: '', email: '', instagram: '', officeAddress: '' },
+  _version: 0,
 }
 
 function reducer(state: ItineraryState, action: Action): ItineraryState {
@@ -67,6 +81,8 @@ function reducer(state: ItineraryState, action: Action): ItineraryState {
       return { ...state, companyDetails: action.payload }
     case 'SET_CONTACT_INFO':
       return { ...state, contactInfo: action.payload }
+    case 'LOAD_SAMPLE_DATA':
+      return { ...action.payload, _version: state._version + 1 }
     default:
       return state
   }

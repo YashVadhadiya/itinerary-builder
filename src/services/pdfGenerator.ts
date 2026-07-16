@@ -4,6 +4,18 @@ import type {
   TermsSection, GalleryImage, CompanyDetails, ContactInfo,
 } from '../types'
 
+let pdfMake: any = null
+let pdfInit: Promise<void> | null = null
+
+async function ensurePdfMake() {
+  if (pdfInit) return pdfInit
+  pdfInit = (async () => {
+    const mod = await import('./pdfMakeInit')
+    pdfMake = mod.default || mod
+  })()
+  return pdfInit
+}
+
 export async function generatePdf(
   overview: PackageOverview,
   hotels: HotelOption[],
@@ -16,16 +28,7 @@ export async function generatePdf(
   company: CompanyDetails,
   contact: ContactInfo,
 ) {
-  // Load pdfmake
-  const pdfMakeModule = await import('pdfmake/build/pdfmake')
-  const pdfMake = pdfMakeModule.default
-
-  // Load fonts and register them via addVirtualFileSystem
-  const vfsModule = await import('pdfmake/build/vfs_fonts')
-  const fontsData = vfsModule.default || vfsModule
-  if (fontsData && typeof fontsData === 'object') {
-    pdfMake.addVirtualFileSystem(fontsData)
-  }
+  await ensurePdfMake()
 
   function addPageBreak() {
     doc.content.push({ text: '', pageBreak: 'before' })
@@ -263,7 +266,8 @@ export async function generatePdf(
   })
 
   // ═══════════ GENERATE ═══════════
-  const filename = `Itinerary_${overview.destination.replace(/\s+/g, '_')}.pdf`
+  const destination = overview.destination || 'itinerary'
+  const filename = `Itinerary_${destination.replace(/\s+/g, '_')}.pdf`
 
   try {
     const pdfDoc = pdfMake.createPdf(doc)
@@ -284,7 +288,27 @@ export async function generatePdf(
       })
     } catch (err2) {
       console.error('PDF fallback error:', err2)
-      alert('Failed to generate PDF. Please check the console for details.')
+      alert('Failed to generate PDF. Check the browser console (F12) for details.')
     }
   }
+}
+
+export async function downloadSamplePdf() {
+  await ensurePdfMake()
+
+  const sampleData = await import('../utils/sampleData')
+  const { sampleOverview, sampleHotelOptions, sampleTransportation, samplePricing, sampleInclusionsExclusions, sampleItineraryDays, sampleTerms, sampleCompanyDetails, sampleContactInfo, sampleGallery } = sampleData
+
+  return generatePdf(
+    sampleOverview,
+    sampleHotelOptions,
+    sampleTransportation,
+    samplePricing,
+    sampleInclusionsExclusions,
+    sampleItineraryDays,
+    sampleTerms,
+    sampleGallery || [],
+    sampleCompanyDetails,
+    sampleContactInfo,
+  )
 }

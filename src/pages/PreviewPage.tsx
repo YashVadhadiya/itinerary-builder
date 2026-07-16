@@ -13,7 +13,12 @@ export default function PreviewPage() {
   const pages = getPageStructure(hotelOptions, t, pricing, itineraryDays, terms, gallery)
 
   async function handleDownload() {
-    await generatePdf(o, hotelOptions, t, pricing, ie, itineraryDays, terms, gallery, cd, ci)
+    try {
+      await generatePdf(o, hotelOptions, t, pricing, ie, itineraryDays, terms, gallery, cd, ci)
+    } catch (err: any) {
+      console.error('PDF download failed:', err)
+      alert('Failed to download PDF. Check browser console (F12) for details.\n\n' + (err?.message || ''))
+    }
   }
 
   async function handleSaveToSheets() {

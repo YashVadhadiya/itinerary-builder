@@ -20,7 +20,7 @@ export function StepOverview({ onNext }: Props) {
   return (
     <div className="max-w-2xl mx-auto">
       <StepHeader step={1} label="Package Overview" />
-      <PackageOverviewForm initialData={state.packageOverview} onNext={onNext} />
+      <PackageOverviewForm key={state._version} initialData={state.packageOverview} onNext={onNext} />
     </div>
   )
 }
@@ -31,6 +31,7 @@ export function StepHotels({ onNext, onBack }: Props) {
     <div className="max-w-3xl mx-auto">
       <StepHeader step={2} label="Hotels" />
       <HotelsForm
+        key={state._version}
         initialData={state.hotelOptions}
         onBack={onBack!}
         onNext={onNext}
@@ -45,6 +46,7 @@ export function StepTransport({ onNext, onBack }: Props) {
     <div className="max-w-3xl mx-auto">
       <StepHeader step={3} label="Transportation" />
       <TransportationForm
+        key={state._version}
         initialData={state.transportation}
         onBack={onBack!}
         onNext={onNext}
@@ -59,6 +61,7 @@ export function StepPricing({ onNext, onBack }: Props) {
     <div className="max-w-3xl mx-auto">
       <StepHeader step={4} label="Pricing" />
       <PricingForm
+        key={state._version}
         initialData={state.pricing}
         hotelOptions={state.hotelOptions}
         onBack={onBack!}
@@ -74,6 +77,7 @@ export function StepInclusionsExclusions({ onNext, onBack }: Props) {
     <div className="max-w-3xl mx-auto">
       <StepHeader step={5} label="Inclusions & Exclusions" />
       <InclusionsExclusionsForm
+        key={state._version}
         initialData={state.inclusionsExclusions}
         onBack={onBack!}
         onNext={onNext}
@@ -88,6 +92,7 @@ export function StepItineraryDays({ onNext, onBack }: Props) {
     <div className="max-w-3xl mx-auto">
       <StepHeader step={6} label="Day Wise Itinerary" />
       <DayWiseItineraryForm
+        key={state._version}
         initialData={state.itineraryDays}
         onBack={onBack!}
         onNext={onNext}
@@ -102,6 +107,7 @@ export function StepTerms({ onNext, onBack }: Props) {
     <div className="max-w-3xl mx-auto">
       <StepHeader step={7} label="Terms & Conditions" />
       <TermsForm
+        key={state._version}
         initialData={state.terms}
         onBack={onBack!}
         onNext={onNext}
@@ -116,6 +122,7 @@ export function StepGallery({ onNext, onBack }: Props) {
     <div className="max-w-4xl mx-auto">
       <StepHeader step={8} label="Photo Gallery" />
       <GalleryForm
+        key={state._version}
         initialData={state.gallery}
         onBack={onBack!}
         onNext={onNext}
@@ -130,6 +137,7 @@ export function StepCompany({ onNext, onBack }: Props) {
     <div className="max-w-2xl mx-auto">
       <StepHeader step={9} label="Company Details" />
       <CompanyDetailsForm
+        key={state._version}
         initialData={state.companyDetails}
         onBack={onBack!}
         onNext={onNext}
@@ -144,6 +152,7 @@ export function StepContact({ onNext, onBack }: Props) {
     <div className="max-w-2xl mx-auto">
       <StepHeader step={10} label="Contact Information" />
       <ContactForm
+        key={state._version}
         initialData={state.contactInfo}
         onBack={onBack!}
         onNext={onNext}
