@@ -21,7 +21,7 @@
     "vite": "^6.4.3"
   },
   "dependencies": {
-    "pdfmake": "^0.3.11",
+    "jspdf": "^4.2.1",
     "react-router-dom": "^7.18.1"
   }
 }
